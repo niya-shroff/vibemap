@@ -2,6 +2,8 @@
 
 VibeMap is an advanced semantic natural language music cognition system. It integrates the Spotify Web API with Qdrant Vector Database and the Gemini LLM to create dynamic acoustic vector spaces out of a user's standard music library.
 
+<img width="1608" height="1708" alt="image" src="https://github.com/user-attachments/assets/9c48b52c-f61c-4be1-a8b8-c7ed7bf731ac" />
+
 ## Features
 * **OAuth Spotify Linking:** Authenticates and pulls robust payloads directly from your personalized Spotify library.
 * **Vector Library Ingestion:** Absorbs custom user libraries (Top Tracks, Saved Tracks) mixed directly with robust algorithmic endpoints (Audio Features & Recommendations).
