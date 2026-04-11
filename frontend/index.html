@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VibeMap Cognition</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>VibeMap</h1>
+            <p>Music Cognition & Reasoning Engine</p>
+        </header>
+        
+        <div class="controls">
+            <button id="loginBtn" class="btn">Connect to Spotify</button>
+            <button id="ingestBtn" class="btn btn-secondary">Sync Memory (Qdrant)</button>
+        </div>
+
+        <div class="chat-container">
+            <div id="chatHistory" class="chat-history">
+                <div class="message system">Cognitive engine ready. Please authenticate.</div>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="chatInput" placeholder="e.g. Build a playlist for rainy nights..." disabled>
+                <button id="sendBtn" class="btn" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+    <script src="js/app.js"></script>
+</body>
+</html>

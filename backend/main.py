@@ -1,9 +1,9 @@
 import time
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from auth_spotify import router as auth_router
-from ingest import ingest_user_music
+from api.auth import router as auth_router
+from services.ingest import ingest_user_music
 from agent.mcp_agent import agent
 app = FastAPI(
     title="VibeMap Music Cognition Engine",
@@ -94,18 +94,14 @@ def ingest():
 
     except Exception as e:
         print("[INGEST ERROR]", repr(e))
-
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # -------------------------
 # SPOTIFY API TEST ENDPOINT
 # -------------------------
-from auth_spotify import TOKEN_STORE
-import spotify_api
+from api.auth import TOKEN_STORE
+from services import spotify as spotify_api
 
 @app.get("/test-spotify", tags=["Diagnostics"], summary="Execute API Test Suite")
 def test_spotify():
@@ -126,18 +122,12 @@ def test_spotify():
         search_res = spotify_api.search_spotify(user_id, "drake", limit=2)
         results["search"] = [{"name": t["name"], "id": t["id"]} for t in search_res]
         
-        if search_res:
-            test_id = search_res[0]["id"]
-            features = spotify_api.get_audio_features(user_id, [test_id])
-            results["audio_features"] = features[0] if features else None
-            
-        if search_res:
-            rec_res = spotify_api.get_recommendations(user_id, seed_tracks=[test_id], limit=2)
-            results["recommendations"] = [{"name": t["name"], "id": t["id"]} for t in rec_res]
-            
         pl = spotify_api.create_physical_playlist(user_id, name="Test Vibe API")
-        if search_res and rec_res:
-            tracks_to_add = [search_res[0]["id"], rec_res[0]["id"]]
+        
+        tracks_to_add = []
+        if search_res: tracks_to_add.append(search_res[0]["id"])
+        
+        if tracks_to_add:
             added = spotify_api.add_tracks_to_physical_playlist(user_id, pl["id"], tracks_to_add)
             results["playlist_created"] = pl["id"]
             results["playlist_populated"] = added.get("snapshot_id") is not None
@@ -146,7 +136,7 @@ def test_spotify():
         
     except Exception as e:
         print("[TEST ERROR] Failed inside test route:", str(e))
-        return {"status": "error", "error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 # -------------------------
 # CHAT ENDPOINT
@@ -171,8 +161,4 @@ def chat(
 
     except Exception as e:
         print("[CHAT ERROR]", repr(e))
-
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))

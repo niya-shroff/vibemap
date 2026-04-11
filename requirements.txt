@@ -1,6 +1,0 @@
-fastapi
-uvicorn
-spotipy
-qdrant-client
-sentence-transformers
-python-dotenv
