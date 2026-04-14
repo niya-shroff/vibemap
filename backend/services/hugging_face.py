@@ -17,6 +17,41 @@ processor = ClapProcessor.from_pretrained("laion/clap-htsat-fused")
 
 dataset = load_dataset("ashraq/esc50", split="train")
 
+def index_audio():
+    points = []
+    for idx, sample in enumerate(dataset):
+        waveform = sample["audio"]["array"]
+        sr = sample["audio"]["sampling_rate"]
+        emb = get_embedding(waveform)
+        points.append(
+            PointStruct(
+                id=idx,
+                vector=emb.tolist(),
+                payload={
+                    "label": sample["category"], 
+                    "filename": sample["filename"],
+                    "fold": sample["fold"],
+                    "target": sample["target"],
+                    "esc10": sample["esc10"],
+                    "type": "env_sound"
+                }
+            )
+        )
+        if len(points) >= BATCH_SIZE:
+            client.upsert(
+                collection_name=COLLECTION_NAME,
+                points=points,
+                wait=True
+            )
+            print(f"Upserted {idx} samples")
+            points = []
+    if points:
+        client.upsert(
+            collection_name=COLLECTION_NAME,
+            points=points,
+            wait=True
+        )
+
 def get_embedding(audio_waveform):
     inputs = processor(
         audio=audio_waveform,
@@ -27,40 +62,6 @@ def get_embedding(audio_waveform):
         emb = model.get_audio_features(**inputs)
     return emb.squeeze().cpu().numpy()
 
-points = []
-for idx, sample in enumerate(dataset):
-    waveform = sample["audio"]["array"]
-    sr = sample["audio"]["sampling_rate"]
-    emb = get_embedding(waveform)
-    points.append(
-        PointStruct(
-            id=idx,
-            vector=emb.tolist(),
-            payload={
-                "label": sample["category"], 
-                "filename": sample["filename"],
-                "fold": sample["fold"],
-                "target": sample["target"],
-                "esc10": sample["esc10"],
-                "type": "env_sound"
-            }
-        )
-    )
-    if len(points) >= BATCH_SIZE:
-        client.upsert(
-            collection_name=COLLECTION_NAME,
-            points=points,
-            wait=True
-        )
-        print(f"Upserted {idx} samples")
-        points = []
-if points:
-    client.upsert(
-        collection_name=COLLECTION_NAME,
-        points=points,
-        wait=True
-    )
-
 def search_audio(audio_waveform):
     emb = get_embedding(audio_waveform)
     results = client.query_points(
@@ -68,9 +69,9 @@ def search_audio(audio_waveform):
         query=emb.tolist(),
         limit=5
     )
-    for r in results:
-        print(r.payload, r.score)
+    print(results)
 
-# Local embeddings search
-sample = dataset[0]["audio"]["array"]
-search_audio(sample)
+if __name__ == "__main__":
+    index_audio()
+    sample = dataset[0]["audio"]["array"]
+    search_audio(sample)
