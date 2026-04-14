@@ -1,0 +1,128 @@
+:root {
+    --bg-color: #121212;
+    --surface-color: #181818;
+    --text-primary: #ffffff;
+    --text-secondary: #b3b3b3;
+    --accent-color: #1DB954;
+    --accent-hover: #1ed760;
+    --border-color: #2a2a2a;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.container {
+    width: 100%;
+    max-width: 800px;
+    padding: 3rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+header {
+    text-align: center;
+}
+
+header h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.04em;
+    background: linear-gradient(90deg, #ffffff, #b3b3b3);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
+
+header p {
+    color: var(--accent-color);
+    font-size: 1.1em;
+    font-weight: 500;
+    margin: 0.5rem 0 0 0;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.btn {
+    background-color: var(--accent-color);
+    color: #000;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 500px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--text-secondary);
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    background-color: var(--surface-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.chat-history {
+    min-height: 400px;
+    max-height: 500px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.message {
+    padding: 1rem 1.2rem;
+    border-radius: 8px;
+    max-width: 85%;
+}
+
+.user-msg {
+    background: #2a2a2a;
+    align-self: flex-end;
+}
+
+.agent-msg {
+    background: rgba(29,185,84,0.1);
+    border-left: 3px solid var(--accent-color);
+}
+
+.system {
+    color: var(--text-secondary);
+    align-self: center;
+}
+
+.input-group {
+    display: flex;
+    gap: 0.8rem;
+}
+
+input {
+    flex: 1;
+    padding: 1rem;
+    border-radius: 500px;
+    border: 1px solid var(--border-color);
+    background: #242424;
+    color: white;
+}

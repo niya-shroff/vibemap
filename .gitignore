@@ -62,3 +62,4 @@ qdrant_storage/
 *.db
 *.sqlite3
 backend/.env
+backend/.vercelignore
