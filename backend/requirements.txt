@@ -5,3 +5,14 @@ python-dotenv
 qdrant-client
 sentence-transformers
 google-genai
+transformers
+datasets
+pandas
+numpy
+torch
+librosa
+tensorflow
+pedalboard 
+torchcodec
+torchaudio
+soundfile
