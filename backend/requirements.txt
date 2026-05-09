@@ -4,7 +4,6 @@ requests
 python-dotenv
 qdrant-client
 sentence-transformers
-google-genai
 transformers
 datasets
 pandas

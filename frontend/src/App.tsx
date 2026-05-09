@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Message } from "./types";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.DEV ? "http://localhost:8000" : "";
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -108,9 +108,16 @@ export default function App() {
     setInput("");
 
     try {
-      const res = await fetch(
-        `${API_BASE}/chat?q=${encodeURIComponent(q)}`
-      );
+      const chatHistory = messages
+        .filter(m => m.type !== "system")
+        .map(m => ({ role: m.type === 'user' ? 'user' : 'assistant', content: m.text }));
+      chatHistory.push({ role: 'user', content: q });
+
+      const res = await fetch(`${API_BASE}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: chatHistory })
+      });
       const data = await res.json();
 
       setMessages((prev) => [

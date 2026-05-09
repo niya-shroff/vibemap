@@ -8,9 +8,9 @@ from agent.mcp_agent import agent
 app = FastAPI(
     title="VibeMap Music Cognition Engine",
     description="""
-An AI-powered semantic music search and playlist generation API integrating Spotify Web API, Qdrant Vector Database, and Google Gemini LLM.
+An AI-powered semantic music search and playlist generation API integrating Spotify Web API, Qdrant Vector Database, and Hermes AI LLM.
 
-🚨 **AUTHENTICATION REQUIRED:** Before you can test any endpoints below, you must authenticate. 
+**AUTHENTICATION REQUIRED:** Before you can test any endpoints below, you must authenticate. 
 **[Click Here to Login to Spotify](/login)** (This will redirect you back to the frontend, after which you can return here to test).
 
 ### API Endpoints:
@@ -141,18 +141,22 @@ def test_spotify():
 # -------------------------
 # CHAT ENDPOINT
 # -------------------------
-@app.get("/chat", tags=["Agent"], summary="Talk to the VibeMap LLM Agent")
-def chat(
-    q: str = Query(..., description="Your natural language request to the agent.", example="Build a playlist for rainy nights")
-):
+from pydantic import BaseModel
+from typing import List, Dict
+
+class ChatRequest(BaseModel):
+    messages: List[Dict[str, str]]
+
+@app.post("/chat", tags=["Agent"], summary="Talk to the VibeMap LLM Agent")
+def chat(req: ChatRequest):
     """
-    Passes your semantic query directly into the Google Gemini LLM Engine.
+    Passes your semantic query directly into the Hermes AI LLM Engine.
     The agent computes your vector space explicitly to form responses.
     """
-    print(f"[Chat Endpoint] Invoking VibeMap Agent with query: '{q}'")
+    print(f"[Chat Endpoint] Invoking VibeMap Agent with history length: {len(req.messages)}")
 
     try:
-        response = agent(q)
+        response = agent(req.messages)
 
         return {
             "status": "ok",
@@ -160,5 +164,24 @@ def chat(
         }
 
     except Exception as e:
-        print("[CHAT ERROR]", repr(e))
         raise HTTPException(status_code=500, detail=str(e))
+
+# -------------------------
+# STATIC FRONTEND SERVING
+# -------------------------
+import os
+import mimetypes
+from fastapi.staticfiles import StaticFiles
+
+# Fix MIME types for Windows/macOS where registry might be missing .js
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
+mimetypes.add_type("image/svg+xml", ".svg")
+
+frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+
+if os.path.isdir(frontend_dist):
+    print(f"[Startup] Found built frontend at {frontend_dist}. Mounting to root.")
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
+else:
+    print(f"[Startup] Frontend not built. Use 'npm run build' in frontend dir to serve UI via backend.")

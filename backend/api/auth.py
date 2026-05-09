@@ -111,4 +111,4 @@ def callback(state: str, code: str = None, error: str = None):
         "refresh": refresh_token
     }
 
-    return RedirectResponse("http://localhost:3000/?auth=true")
+    return RedirectResponse("/?auth=true")
