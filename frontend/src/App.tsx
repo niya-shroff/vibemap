@@ -7,6 +7,8 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
   const [isReady, setIsReady] = useState<boolean>(false);
+  /** Canonical IDs from the last build/search turn; sent on follow-up so export is not hallucinated. */
+  const [lastSpotifyTrackIds, setLastSpotifyTrackIds] = useState<string[]>([]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -113,16 +115,32 @@ export default function App() {
         .map(m => ({ role: m.type === 'user' ? 'user' : 'assistant', content: m.text }));
       chatHistory.push({ role: 'user', content: q });
 
+      const payload: Record<string, unknown> = { messages: chatHistory };
+      if (lastSpotifyTrackIds.length > 0) {
+        payload.last_spotify_track_ids = lastSpotifyTrackIds;
+      }
+
       const res = await fetch(`${API_BASE}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: chatHistory })
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
 
+      if (Array.isArray(data.spotify_track_ids) && data.spotify_track_ids.length > 0) {
+        setLastSpotifyTrackIds(data.spotify_track_ids);
+      }
+
+      let agentText: string = data.response ?? "";
+      if (typeof data.spotify_playlist_url === "string" && data.spotify_playlist_url) {
+        agentText = agentText
+          ? `${agentText}\n\n${data.spotify_playlist_url}`
+          : data.spotify_playlist_url;
+      }
+
       setMessages((prev) => [
         ...prev,
-        { type: "agent", text: data.response },
+        { type: "agent", text: agentText },
       ]);
     } catch (err: any) {
       setMessages((prev) => [

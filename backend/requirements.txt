@@ -1,4 +1,5 @@
 fastapi
+pydantic>=2
 uvicorn
 requests
 python-dotenv
