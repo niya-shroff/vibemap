@@ -1,128 +1,306 @@
+/* VibeMap — refined Spotify-adjacent dark UI */
+
 :root {
-    --bg-color: #121212;
-    --surface-color: #181818;
-    --text-primary: #ffffff;
-    --text-secondary: #b3b3b3;
-    --accent-color: #1DB954;
-    --accent-hover: #1ed760;
-    --border-color: #2a2a2a;
+  --bg: #0d0d0f;
+  --bg-elevated: #141418;
+  --surface: #1a1a1f;
+  --surface-hover: #222228;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #e8e8ec;
+  --muted: #8b8b99;
+  --accent: #1db954;
+  --accent-dim: rgba(29, 185, 84, 0.14);
+  --accent-glow: rgba(29, 185, 84, 0.35);
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-pill: 9999px;
+  --font: "Inter", system-ui, -apple-system, sans-serif;
+  --shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
-    background-color: var(--bg-color);
-    color: var(--text-primary);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    min-height: 100vh;
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font);
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -30%, rgba(29, 185, 84, 0.12), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 100% 50%, rgba(99, 102, 241, 0.06), transparent);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
 }
 
-.container {
-    width: 100%;
-    max-width: 800px;
-    padding: 3rem 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
+#root {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
 }
 
-header {
-    text-align: center;
+.app {
+  width: 100%;
+  max-width: 720px;
+  min-height: 100vh;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-header h1 {
-    font-size: 3.5rem;
-    font-weight: 800;
-    margin: 0;
-    letter-spacing: -0.04em;
-    background: linear-gradient(90deg, #ffffff, #b3b3b3);
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    -webkit-text-fill-color: transparent;
+/* Header */
+
+.app-header {
+  text-align: center;
+  padding-top: 0.5rem;
 }
 
-header p {
-    color: var(--accent-color);
-    font-size: 1.1em;
-    font-weight: 500;
-    margin: 0.5rem 0 0 0;
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
 }
 
-.controls {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
+.brand-mark {
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  margin: 0;
+  background: linear-gradient(135deg, #fff 0%, #b8bcc8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
+
+.brand-tagline {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--muted);
+  max-width: 22rem;
+  line-height: 1.45;
+}
+
+/* Toolbar */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.toolbar .btn {
+  flex: 0 0 auto;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.status-pill.ready {
+  border-color: rgba(29, 185, 84, 0.35);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.status-pill.ready .status-dot {
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* Buttons */
 
 .btn {
-    background-color: var(--accent-color);
-    color: #000;
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 500px;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 650;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-pill);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.btn-secondary {
-    background-color: transparent;
-    color: var(--text-primary);
-    border: 1px solid var(--text-secondary);
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
-.chat-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    background-color: var(--surface-color);
-    border-radius: 12px;
-    padding: 1.5rem;
+.btn-primary {
+  background: var(--accent);
+  color: #06140a;
+  box-shadow: 0 4px 20px var(--accent-glow);
 }
 
-.chat-history {
-    min-height: 400px;
-    max-height: 500px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
 }
 
-.message {
-    padding: 1rem 1.2rem;
-    border-radius: 8px;
-    max-width: 85%;
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
-.user-msg {
-    background: #2a2a2a;
-    align-self: flex-end;
+.btn-ghost:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
-.agent-msg {
-    background: rgba(29,185,84,0.1);
-    border-left: 3px solid var(--accent-color);
+/* Chat panel */
+
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
-.system {
-    color: var(--text-secondary);
-    align-self: center;
+.chat-scroll {
+  flex: 1;
+  min-height: 280px;
+  max-height: min(58vh, 560px);
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  scroll-behavior: smooth;
 }
 
-.input-group {
-    display: flex;
-    gap: 0.8rem;
+.chat-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
 
-input {
-    flex: 1;
-    padding: 1rem;
-    border-radius: 500px;
-    border: 1px solid var(--border-color);
-    background: #242424;
-    color: white;
+.msg {
+  max-width: 92%;
+  padding: 0.85rem 1.05rem;
+  border-radius: var(--radius-md);
+  font-size: 0.94rem;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.msg-body-text {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.msg-user {
+  align-self: flex-end;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-bottom-right-radius: 4px;
+}
+
+.msg-agent {
+  align-self: flex-start;
+  background: var(--accent-dim);
+  border: 1px solid rgba(29, 185, 84, 0.22);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+
+.msg-system {
+  align-self: center;
+  max-width: 100%;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--muted);
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+}
+
+.embed-wrap {
+  margin-top: 0.65rem;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.embed-wrap iframe {
+  display: block;
+  border-radius: var(--radius-md);
+}
+
+/* Composer */
+
+.composer {
+  display: flex;
+  gap: 0.6rem;
+  padding: 1rem 1.1rem;
+  background: rgba(0, 0, 0, 0.35);
+  border-top: 1px solid var(--border);
+}
+
+.composer input {
+  flex: 1;
+  font-family: var(--font);
+  font-size: 0.95rem;
+  padding: 0.75rem 1.15rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.composer input:focus {
+  border-color: rgba(29, 185, 84, 0.4);
+  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.12);
+}
+
+.composer input::placeholder {
+  color: var(--muted);
+}
+
+.composer .btn-primary {
+  padding-left: 1.4rem;
+  padding-right: 1.4rem;
+}
+
+.footer-hint {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+  opacity: 0.85;
 }

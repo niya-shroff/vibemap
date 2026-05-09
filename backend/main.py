@@ -141,13 +141,14 @@ def test_spotify():
 # -------------------------
 # CHAT ENDPOINT
 # -------------------------
-from pydantic import BaseModel
-from typing import List, Dict
+from agent.schemas import ChatRequest, ChatResponse
 
-class ChatRequest(BaseModel):
-    messages: List[Dict[str, str]]
-
-@app.post("/chat", tags=["Agent"], summary="Talk to the VibeMap LLM Agent")
+@app.post(
+    "/chat",
+    tags=["Agent"],
+    summary="Talk to the VibeMap LLM Agent",
+    response_model=ChatResponse,
+)
 def chat(req: ChatRequest):
     """
     Passes your semantic query directly into the Hermes AI LLM Engine.
@@ -156,12 +157,14 @@ def chat(req: ChatRequest):
     print(f"[Chat Endpoint] Invoking VibeMap Agent with history length: {len(req.messages)}")
 
     try:
-        response = agent(req.messages)
+        messages_payload = [m.model_dump() for m in req.messages]
+        out = agent(messages_payload, pinned_spotify_track_ids=req.last_spotify_track_ids)
 
-        return {
-            "status": "ok",
-            "response": response
-        }
+        return ChatResponse(
+            response=out["response"],
+            spotify_track_ids=out["spotify_track_ids"],
+            spotify_playlist_url=out.get("spotify_playlist_url"),
+        )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
