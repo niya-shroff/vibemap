@@ -1,10 +1,7 @@
-from google import genai
-from google.genai import types
+import json
+import requests
 from core.config import *
 from tools.registry import TOOLS
-
-client = genai.Client(api_key=GEMINI_API_KEY)
-MODEL_ID = "gemini-2.5-flash"
 
 SYSTEM_PROMPT = """
 You are VibeMap AI, an advanced semantic natural language music cognition system.
@@ -27,7 +24,7 @@ def build_playlist(vibe_description: str) -> list:
     """Build a playlist."""
     return TOOLS["build_playlist"](vibe_description)
 
-def export_physical_playlist(playlist_name: str, spotify_ids: list[str]) -> str:
+def export_physical_playlist(playlist_name: str, spotify_ids: list) -> str:
     """Creates a real Spotify playlist. Pass a name and a list of Spotify IDs."""
     cleaned = []
     for item in spotify_ids:
@@ -43,56 +40,139 @@ def explain_vibe() -> str:
     """Explain why the user likes these songs."""
     return TOOLS["explain_vibe"]([])
 
-def agent(user_input: str):
-    config = types.GenerateContentConfig(
-        system_instruction=SYSTEM_PROMPT,
-        tools=[search_vibe, search_spotify_global, build_playlist, export_physical_playlist, explain_vibe],
-        tool_config=types.ToolConfig(
-            function_calling_config=types.FunctionCallingConfig(
-                mode="AUTO"
-            )
-        )
-    )
+def agent(user_messages: list):
+    print(f"[Agent] Processing conversation with history length {len(user_messages)}...")
+    
+    url = "https://hermes.ai.unturf.com/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer choose-any-value"
+    }
+    
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "search_vibe",
+                "description": "Find similar songs in the user's vector space by a text description.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "vibe_description": {"type": "string"}
+                    },
+                    "required": ["vibe_description"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "search_spotify_global",
+                "description": "Search Spotify's global catalog directly by query like 'lofi hip hop' or 'drake'.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string"}
+                    },
+                    "required": ["query"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "build_playlist",
+                "description": "Build a playlist.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "vibe_description": {"type": "string"}
+                    },
+                    "required": ["vibe_description"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "export_physical_playlist",
+                "description": "Creates a real Spotify playlist. Pass a name and a list of Spotify IDs.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "playlist_name": {"type": "string"},
+                        "spotify_ids": {
+                            "type": "array",
+                            "items": {"type": "string"}
+                        }
+                    },
+                    "required": ["playlist_name", "spotify_ids"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "explain_vibe",
+                "description": "Explain why the user likes these songs.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            }
+        }
+    ]
 
-    chat = client.chats.create(model=MODEL_ID, config=config)
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + user_messages
     
-    print(f"[Agent] Converting user query into acoustic floats...")
-    response = chat.send_message(user_input)
-    
-    while response.function_calls:
-        # We handle tool calls one batch at a time
-        parts = []
-        for fn_call in response.function_calls:
-            fn_name = fn_call.name
-            fn_args = {k: v for k, v in fn_call.args.items()} if fn_call.args else {}
+    while True:
+        payload = {
+            "model": "adamo1139/Hermes-3-Llama-3.1-8B-FP8-Dynamic",
+            "messages": messages,
+            "temperature": 0.5,
+            "max_tokens": 500,
+            "tools": tools,
+            "tool_choice": "auto"
+        }
+        
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code != 200:
+            raise Exception(f"Failed to communicate with LLM: {response.text}")
             
-            print(f"[Agent] AI mathematically deduced signature: {fn_name}({fn_args})")
-            
-            if fn_name in TOOLS:
+        data = response.json()
+        message = data["choices"][0]["message"]
+        
+        if message.get("tool_calls"):
+            messages.append(message)
+            for tool_call in message["tool_calls"]:
+                fn_name = tool_call["function"]["name"]
+                fn_args = json.loads(tool_call["function"]["arguments"])
+                print(f"[Agent] AI mathematically deduced signature: {fn_name}({fn_args})")
+                
+                result = None
                 try:
-                    # Execute tool
-                    result = TOOLS[fn_name](**fn_args)
-                    print(f"[Agent] Retrieved tracks: {len(result) if type(result) == list else 'metadata'}")
-                    
-                    parts.append(
-                        types.Part.from_function_response(
-                            name=fn_name,
-                            response={"result": result}
-                        )
-                    )
+                    if fn_name == "search_vibe":
+                        result = search_vibe(**fn_args)
+                    elif fn_name == "search_spotify_global":
+                        result = search_spotify_global(**fn_args)
+                    elif fn_name == "build_playlist":
+                        result = build_playlist(**fn_args)
+                    elif fn_name == "export_physical_playlist":
+                        result = export_physical_playlist(**fn_args)
+                    elif fn_name == "explain_vibe":
+                        result = explain_vibe()
+                    else:
+                        result = f"Unknown tool: {fn_name}"
                 except Exception as e:
                     print(f"[Agent] Tool Error: {e}")
-                    parts.append(
-                        types.Part.from_function_response(
-                            name=fn_name,
-                            response={"error": str(e)}
-                        )
-                    )
-        
-        if parts:
-            # Send all tool responses back in one message
-            response = chat.send_message(parts)
+                    result = str(e)
+                
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call["id"],
+                    "name": fn_name,
+                    "content": json.dumps(result)
+                })
         else:
-            break
-
-    return response.text
+            return message.get("content", "")
