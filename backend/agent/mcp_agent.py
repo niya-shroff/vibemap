@@ -8,8 +8,10 @@ You are VibeMap AI, an advanced semantic natural language music cognition system
 When the user asks for a vibe based on their library, use `search_vibe` or `build_playlist`.
 When a user asks to search for specific new songs, artists, or globally available music outside of their local context, you MUST use `search_spotify_global`.
 
-CRITICAL: If the user explicitly asks to "save", "create", or "make it a real playlist", you MUST use the `export_physical_playlist` tool.
-First, run a search to retrieve the data IDs. Take the resulting `spotify_id`s and pass them into `export_physical_playlist` with a creative name to write it permanently into their Spotify account.
+CRITICAL — saving to Spotify:
+If the user asks to save, create, or export a real playlist, you MUST use `export_physical_playlist`.
+You MUST NOT guess, invent, or fabricate Spotify track IDs. Every `spotify_id` in `export_physical_playlist` must be copied EXACTLY from the `spotify_id` field in a tool message you already received from `search_vibe`, `build_playlist`, or `search_spotify_global` in this same conversation.
+If you do not have those tool results in context, call `search_vibe` or `build_playlist` (or `search_spotify_global`) again first, then export using only IDs from that fresh result.
 """
 
 def search_vibe(vibe_description: str) -> list:
@@ -96,14 +98,15 @@ def agent(user_messages: list):
             "type": "function",
             "function": {
                 "name": "export_physical_playlist",
-                "description": "Creates a real Spotify playlist. Pass a name and a list of Spotify IDs.",
+                "description": "Creates a real Spotify playlist on the user's account. spotify_ids must be the exact spotify_id strings from a prior search_vibe, build_playlist, or search_spotify_global tool result in this chat — never placeholder or invented IDs.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "playlist_name": {"type": "string"},
                         "spotify_ids": {
                             "type": "array",
-                            "items": {"type": "string"}
+                            "items": {"type": "string"},
+                            "description": "Exact spotify_id values from the last relevant tool output"
                         }
                     },
                     "required": ["playlist_name", "spotify_ids"]
