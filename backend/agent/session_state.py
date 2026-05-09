@@ -34,6 +34,7 @@ class PlaylistAgentState:
 
     canonical_track_ids: Optional[List[str]] = field(default=None)
     spotify_playlist_url: Optional[str] = field(default=None)
+    exported_this_request: bool = False
 
     def absorb_search_tool(self, fn_name: str, result: Any) -> None:
         ids = extract_track_ids_from_search_result(fn_name, result)
@@ -42,6 +43,7 @@ class PlaylistAgentState:
 
     def absorb_export_success(self, tool_return: Any, exported_track_ids: List[str]) -> None:
         """Call after export_physical_playlist returns successfully."""
+        self.exported_this_request = True
         self.canonical_track_ids = list(exported_track_ids)
         if isinstance(tool_return, str) and tool_return.startswith("https://open.spotify.com/playlist/"):
             self.spotify_playlist_url = tool_return

@@ -38,8 +38,6 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
   const [isReady, setIsReady] = useState<boolean>(false);
-  /** Pinned ids for follow-up turns only; backend prefers fresh build ids in the same request. */
-  const [lastSpotifyTrackIds, setLastSpotifyTrackIds] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -164,18 +162,8 @@ export default function App() {
     setInput("");
 
     try {
-      const chatHistory = messages
-        .filter((m) => m.type !== "system")
-        .map((m) => ({
-          role: m.type === "user" ? "user" : "assistant",
-          content: typeof m.text === "string" ? m.text : "",
-        }));
-      chatHistory.push({ role: "user", content: q });
-
-      const payload: Record<string, unknown> = { messages: chatHistory };
-      if (lastSpotifyTrackIds.length > 0) {
-        payload.last_spotify_track_ids = lastSpotifyTrackIds;
-      }
+      // One user message per request so the agent never reuses prior playlist URLs from transcript.
+      const payload = { messages: [{ role: "user" as const, content: q }] };
 
       const res = await fetch(`${API_BASE}/chat`, {
         method: "POST",
@@ -183,10 +171,6 @@ export default function App() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-
-      if (Array.isArray(data.spotify_track_ids) && data.spotify_track_ids.length > 0) {
-        setLastSpotifyTrackIds(data.spotify_track_ids);
-      }
 
       let agentText: string = data.response ?? "";
       if (typeof data.spotify_playlist_url === "string" && data.spotify_playlist_url) {
@@ -213,8 +197,8 @@ export default function App() {
         <div className="brand">
           <h1 className="brand-mark">VibeMap</h1>
           <p className="brand-tagline">
-            Turn your Spotify library into playlists by vibe — one conversation, real playlists on
-            your account.
+            Turn your Spotify library into playlists by vibe — each message is its own request, real
+            playlists on your account.
           </p>
         </div>
       </header>

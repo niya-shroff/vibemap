@@ -45,10 +45,12 @@ class ExportPhysicalPlaylistArgs(BaseModel):
 
     playlist_name: str = Field(..., min_length=1, max_length=300)
     spotify_ids: List[SpotifyTrackId] = Field(
-        ...,
-        min_length=1,
+        default_factory=list,
         max_length=100,
-        description="Must match a prior search/build result; server may override with pinned ids from the client.",
+        description=(
+            "Spotify ids from the latest search_vibe/build_playlist/search_spotify_global tool payload in THIS "
+            "request, or [] so the server fills them from that search for you."
+        ),
     )
 
 
