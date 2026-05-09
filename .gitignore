@@ -43,6 +43,8 @@ venv/
 .venv/
 env/
 .env_python/
+backend/.env
+backend/.env.example
 
 # -------------------
 # Node / Frontend
