@@ -5,13 +5,14 @@ from transformers import ClapModel, ClapProcessor
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 
+from core.config import *
+
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 SAMPLE_RATE = 48000
 BATCH_SIZE = 8
 COLLECTION_NAME = "audio_embeddings"
-QDRANT_URL = os.getenv("QDRANT_URL")
 
-client = QdrantClient(url=QDRANT_URL)
+client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
 model = ClapModel.from_pretrained("laion/clap-htsat-fused").to(DEVICE)
 processor = ClapProcessor.from_pretrained("laion/clap-htsat-fused")
 

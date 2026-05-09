@@ -3,7 +3,7 @@ from qdrant_client.models import VectorParams, Distance
 import uuid
 from core.config import *
 
-client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
 
 TRACKS_COLLECTION = "tracks"
 AUDIO_COLLECTION = "audio_collection"
