@@ -1,0 +1,28 @@
+# Python
+venv
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+
+# Node
+node_modules
+
+# Git
+.git
+
+# Environment
+.env
+
+# Data / models
+models
+data
+checkpoints
+
+# Mac/Linux junk
+.DS_Store
+
+# Build artifacts
+dist
+build

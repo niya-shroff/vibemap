@@ -4,15 +4,3 @@ uvicorn
 requests
 python-dotenv
 qdrant-client
-sentence-transformers
-transformers
-datasets
-pandas
-numpy
-torch
-librosa
-tensorflow
-pedalboard 
-torchcodec
-torchaudio
-soundfile
