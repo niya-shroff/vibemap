@@ -19,14 +19,20 @@ def init_db():
     )
 
 def upsert(track, vector):
-    client.upsert(
-        collection_name=TRACKS_COLLECTION,
-        points=[{
-            "id": str(uuid.uuid4()),
-            "vector": vector,
-            "payload": track
-        }]
-    )
+    print(f"[Qdrant] Upserting track {track.get('name')} to {TRACKS_COLLECTION}...")
+    try:
+        client.upsert(
+            collection_name=TRACKS_COLLECTION,
+            points=[{
+                "id": str(uuid.uuid4()),
+                "vector": vector,
+                "payload": track
+            }],
+            wait=True
+        )
+        print(f"[Qdrant] Successfully upserted track {track.get('name')}")
+    except Exception as e:
+        print(f"[Qdrant] Error upserting track {track.get('name')}: {e}")
 
 def search(vector, limit=10):
     response = client.query_points(
