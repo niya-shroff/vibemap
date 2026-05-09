@@ -1,0 +1,13 @@
+-r requirements.txt
+sentence-transformers
+transformers
+datasets
+pandas
+numpy
+torch
+librosa
+tensorflow
+pedalboard 
+torchcodec
+torchaudio
+soundfile
