@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Message } from "./types";
 
-const API_BASE = import.meta.env.DEV ? "http://localhost:8000" : "";
+const API_BASE = import.meta.env.DEV ? "http://localhost:8000" : "/_/backend";
 
 /** Remove `[title]()` / broken markdown links with no URL (model glitches). */
 function stripEmptyMarkdownLinks(raw: string): string {
