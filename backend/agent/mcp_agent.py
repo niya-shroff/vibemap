@@ -25,11 +25,21 @@ You are VibeMap AI, an advanced semantic natural language music cognition system
 When the user asks for a vibe based on their library, use `search_vibe` or `build_playlist`.
 When a user asks to search for specific new songs, artists, or globally available music outside of their local context, you MUST use `search_spotify_global`.
 
+ONE-SHOT playlist creation (default when they want it saved):
+If the user asks you to build, make, or create a playlist AND gives a playlist title or name (e.g. in quotes, or "called X", "named X") OR they ask to save it to Spotify / their account / library, you MUST complete everything in this single assistant turn without asking for confirmation:
+1) Call `build_playlist` with a `vibe_description` that matches their request (mood, genre, count like "5 songs", etc.).
+2) Immediately call `export_physical_playlist` with `playlist_name` set to the exact title they asked for (or a clear title you infer from their message) and `spotify_ids: []` so the server fills ids from step 1.
+Do not tell the user to ask again to save, and do not ask them for Spotify track ids.
+If they only want suggestions or a draft with no mention of saving or naming a playlist, skip export and only search/build.
+
 CRITICAL — saving to Spotify:
 If the user asks to save, create, or export a real playlist, you MUST use `export_physical_playlist`.
 You MUST NOT guess, invent, or fabricate Spotify track IDs. Every `spotify_id` in `export_physical_playlist` must be copied EXACTLY from the `spotify_id` field in a tool message you already received from `search_vibe`, `build_playlist`, or `search_spotify_global` in this same conversation.
 If you do not have those tool results in context, call `search_vibe` or `build_playlist` (or `search_spotify_global`) again first, then export using only IDs from that fresh result.
 After you call `build_playlist` or `search_vibe` in the same turn, you may pass `spotify_ids: []` to `export_physical_playlist`; the server applies the IDs from that search automatically. Prefer copying the IDs from the tool JSON when you can.
+
+Final reply:
+When export succeeded, paste the playlist URL once as a plain https://open.spotify.com/playlist/... line. Never use an empty markdown link like [title]( ) or [title]( with the URL missing. Do not repeat the same link twice. Keep the message concise.
 """
 
 _TOOL_SPECS: List[tuple[str, str, Type[BaseModel]]] = [
@@ -45,15 +55,20 @@ _TOOL_SPECS: List[tuple[str, str, Type[BaseModel]]] = [
     ),
     (
         "build_playlist",
-        "Build a playlist from the user's ingested library using a vibe description.",
+        (
+            "Build a playlist from the user's ingested library using a vibe description "
+            "(mood, tempo, '5 songs', etc.). If they also asked to save under a specific name, "
+            "call export_physical_playlist in the same turn after this returns."
+        ),
         BuildPlaylistArgs,
     ),
     (
         "export_physical_playlist",
         (
-            "Creates a real Spotify playlist on the user's account. spotify_ids must be the exact "
-            "spotify_id strings from a prior search_vibe, build_playlist, or search_spotify_global "
-            "tool result in this chat — never placeholder or invented IDs."
+            "Creates a real Spotify playlist on the user's account. Call in the same turn as "
+            "build_playlist/search when the user asked to save. spotify_ids may be [] — the server "
+            "fills them from the prior tool in this turn. Otherwise use exact spotify_id strings "
+            "from a prior search_vibe, build_playlist, or search_spotify_global result."
         ),
         ExportPhysicalPlaylistArgs,
     ),
@@ -131,16 +146,14 @@ def _run_tool(
         return build_playlist(**args.model_dump())
 
     if fn_name == "export_physical_playlist":
-        # Pinned ids (multi-turn UI) > LLM args > ids from a prior search/build in this chat (same
-        # request batch or earlier assistant tool step). The model often omits spotify_ids or sends [].
+        # Fresh search/build in THIS request must beat stale pins from the UI (previous turn).
+        # Pinned ids apply only when this POST did not populate session (e.g. "save that" alone).
         raw = dict(fn_args) if isinstance(fn_args, dict) else {}
-        if pinned_spotify_track_ids:
-            raw = {**raw, "spotify_ids": pinned_spotify_track_ids}
-        else:
-            ids = raw.get("spotify_ids")
-            fallback = state.ids_for_export_fallback()
-            if not ids and fallback:
-                raw = {**raw, "spotify_ids": fallback}
+        session_ids = state.ids_for_export_fallback()
+        if session_ids:
+            raw["spotify_ids"] = session_ids
+        elif pinned_spotify_track_ids:
+            raw["spotify_ids"] = pinned_spotify_track_ids
         args = ExportPhysicalPlaylistArgs.model_validate(raw)
         exported_ids = list(args.spotify_ids)
         out = export_physical_playlist(args.playlist_name, exported_ids)
