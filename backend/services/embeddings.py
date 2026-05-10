@@ -21,21 +21,28 @@ def get_huggingface_embedding(text: str):
     print("[Embeddings] Fallback to zero vector")
     return [0.0] * 384
 
-# Initialize SentenceTransformer globally to prevent deadlocks in multithreaded environments
+# We initialize this lazily inside the function to prevent uvicorn --reload fork deadlocks!
 LOCAL_MODEL = None
-try:
-    from sentence_transformers import SentenceTransformer
-    print("[Embeddings] Loading local SentenceTransformer model...")
-    LOCAL_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
-    print("[Embeddings] Local model loaded successfully.")
-except ImportError:
-    print("[Embeddings] SentenceTransformer not installed, using HF API fallback.")
+
+def get_local_model():
+    global LOCAL_MODEL
+    if LOCAL_MODEL is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+            print("[Embeddings] Loading local SentenceTransformer model...")
+            LOCAL_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+            print("[Embeddings] Local model loaded successfully.")
+        except ImportError:
+            print("[Embeddings] SentenceTransformer not installed, using HF API fallback.")
+            LOCAL_MODEL = "UNAVAILABLE"
+    return LOCAL_MODEL
 
 def embed_text(text: str):
-    if LOCAL_MODEL is not None:
+    model = get_local_model()
+    if model != "UNAVAILABLE" and model is not None:
         try:
             print("[Embeddings] Creating local embedding...")
-            result = LOCAL_MODEL.encode(text).tolist()
+            result = model.encode(text).tolist()
             return result
         except Exception as e:
             print(f"[Embeddings] Local embedding failed: {e}")
