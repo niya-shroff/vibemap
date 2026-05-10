@@ -137,6 +137,13 @@ export default function App() {
       const res = await fetch(`${API_BASE}/ingest`);
       const data = await res.json();
 
+      if (!res.ok) {
+        console.error("[Ingest Error] Server responded with:", res.status, data);
+        throw new Error(data.detail || `Server error ${res.status}`);
+      }
+
+      console.log("[Ingest Success] Response data:", data);
+
       setMessages((prev) => [
         ...prev,
         {

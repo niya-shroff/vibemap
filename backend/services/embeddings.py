@@ -21,20 +21,27 @@ def get_huggingface_embedding(text: str):
     print("[Embeddings] Fallback to zero vector")
     return [0.0] * 384
 
+# Initialize SentenceTransformer globally to prevent deadlocks in multithreaded environments
+LOCAL_MODEL = None
+try:
+    from sentence_transformers import SentenceTransformer
+    print("[Embeddings] Loading local SentenceTransformer model...")
+    LOCAL_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+    print("[Embeddings] Local model loaded successfully.")
+except ImportError:
+    print("[Embeddings] SentenceTransformer not installed, using HF API fallback.")
+
 def embed_text(text: str):
-    try:
-        # Try local execution first if installed
-        print("[Embeddings] Attempting local embedding with SentenceTransformer...")
-        from sentence_transformers import SentenceTransformer
-        # Note: In production we may not want to instantiate it every time, but this fallback
-        # path is primarily for local testing where performance is less critical.
-        model = SentenceTransformer("all-MiniLM-L6-v2")
-        result = model.encode(text).tolist()
-        print("[Embeddings] Successfully created local embedding.")
-        return result
-    except ImportError:
+    if LOCAL_MODEL is not None:
+        try:
+            print("[Embeddings] Creating local embedding...")
+            result = LOCAL_MODEL.encode(text).tolist()
+            return result
+        except Exception as e:
+            print(f"[Embeddings] Local embedding failed: {e}")
+            return get_huggingface_embedding(text)
+    else:
         # On Vercel, use API fallback
-        print("[Embeddings] SentenceTransformer not installed, falling back to API.")
         return get_huggingface_embedding(text)
 
 def embed_track(track):
