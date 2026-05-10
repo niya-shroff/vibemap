@@ -1,0 +1,32 @@
+[project]
+name = "VibeMap Backend"
+version = "0.1.0"
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "black",
+    "sentence-transformers",
+    "qdrant-client",
+    "python-dotenv",
+    "langgraph",
+    "langchain-openai",
+    "langchain-community",
+    "pydantic",
+    "requests",
+    "openai",
+    "fastapi",
+    "uvicorn",
+]
+
+[tool.ruff]
+line-length = 120
+select = ["E", "F", "W"]
+extend-exclude = ["venv", ".venv", "__pycache__"]
+
+[tool.black]
+line-length = 120
+target-version = ["py311"]
+extend-exclude = ".venv/__pycache__"
